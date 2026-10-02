@@ -48,13 +48,23 @@ database, and runs `npm run lint`, `npm run build`, and `npm test` on Node.js 22
 
 The test database exists only for that job. Its credentials are disposable
 test values, not production secrets; the workflow does not load `.env` or
-connect to local or production databases. Official checkout and Node setup
+connect to local or production databases. Checkout, Node setup, and Trivy
 actions are pinned to commit SHAs, with read-only repository permissions.
+
+After those checks pass, the `Docker build and image scan` job builds the
+runtime image from the Dockerfile, tagged with the commit SHA. It refreshes
+the base image and uses Trivy 0.75.0 to scan operating-system and application
+packages for known vulnerabilities. All severities, including findings
+without fixes, appear in the scan logs. A separate enforcement step fails
+the job for `HIGH` or `CRITICAL` findings with available fixes; other findings
+remain visible but do not fail that policy check. Scanner errors still fail
+the job. The vulnerability database is updated by Trivy, so results may change
+even when application code is unchanged.
 
 Workflow results appear in the pull request checks and the repository's
 Actions tab. Requiring a successful check before merge needs a separate
-branch protection or ruleset setting. Docker build, image scanning, and
-deployment are not part of this initial workflow.
+branch protection or ruleset setting. Images are not published to a registry,
+and deployment is not part of this workflow.
 
 ## API
 
@@ -112,6 +122,14 @@ The Dockerfile builds TypeScript using Node.js 22 and creates a runtime image
 with only production dependencies. The application runs as the non-root
 `node` user. Local dependencies, build output, and environment files are
 excluded from the Docker build context.
+
+The runtime stage removes the bundled npm package and its `npm`/`npx` commands
+after installing production dependencies, reducing unnecessary tooling and
+its vulnerable dependencies. The build stage retains npm. Containers start
+with `node dist/index.js`, not `npm start`; npm commands remain available
+on your development machine. If seeding is explicitly needed inside a
+container, use `docker compose exec app node dist/run-seed.js`, which uses
+the container's database configuration and still rejects existing IDs.
 
 In `.env`, keep `DATABASE_URL` pointing to `localhost` for commands run on
 your computer. Add `DOCKER_DATABASE_URL` by copying that connection URL and
