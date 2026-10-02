@@ -12,6 +12,28 @@ The production command, `npm start`, uses environment variables provided by the 
 Run `npm run build` to compile the TypeScript source from `src` into `dist`, then run `npm start`.
 The project uses ECMAScript modules.
 
+## API
+
+The server requires `DATABASE_URL`. The default port is `3000`; override it
+with `PORT`.
+
+| Route | Response |
+| --- | --- |
+| `GET /health` | `{ "status": "ok" }` |
+| `GET /version` | `{ "version": "0.1.0" }`, or the value of `APP_VERSION` |
+| `GET /products` | `{ "products": [...] }`, ordered by ID; an empty table returns `{ "products": [] }` |
+| `GET /products/:id` | A single product, or HTTP 404 with `{ "error": "Product not found" }` |
+
+Products use the original catalog field names, including `shortName`,
+`generalInfo`, `newProduct`, `popularProduct`, `inStock`, and `inBox`.
+Prices are JSON numbers in EUR. Image paths and other JSONB fields are
+returned unchanged. SQL queries read the database, not the catalog file.
+
+Database query failures are logged on the server and return HTTP 500 with
+`{ "error": "Internal server error" }`, without internal database details.
+The health endpoint remains a process liveness check, not a database
+readiness check.
+
 ## Seed the local database
 
 Start PostgreSQL with `docker compose up -d` and apply the initial migration
