@@ -8,6 +8,7 @@
     "dev": "tsx watch --env-file=.env src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
+    "seed": "tsx --env-file=.env src/run-seed.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
