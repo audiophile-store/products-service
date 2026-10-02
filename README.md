@@ -36,7 +36,7 @@ readiness check.
 
 ## Seed the local database
 
-Start PostgreSQL with `docker compose up -d` and apply the initial migration
+Start PostgreSQL with `docker compose up -d db` and apply the initial migration
 once to a database that does not yet have the `products` table:
 
 ```bash
@@ -61,3 +61,39 @@ attempt are rolled back. Existing data is not updated or deleted. Failures are
 reported with a nonzero exit code; successful completion prints
 `Seeded 13 products.`. The command must be run explicitly; starting the server
 does not seed the database.
+
+## Run the application and database with Docker
+
+The Dockerfile builds TypeScript using Node.js 22 and creates a runtime image
+with only production dependencies. The application runs as the non-root
+`node` user. Local dependencies, build output, and environment files are
+excluded from the Docker build context.
+
+In `.env`, keep `DATABASE_URL` pointing to `localhost` for commands run on
+your computer. Add `DOCKER_DATABASE_URL` by copying that connection URL and
+changing only the hostname to `db`, the Compose database service name.
+Keep the same database name and credentials, including any URL encoding.
+Compose passes this value to the application container as `DATABASE_URL`.
+If it is missing, the application exits with a required-configuration error;
+the database-only command remains usable.
+
+Stop any local development server using port `3000`, then run:
+
+```bash
+docker compose up -d --build
+```
+
+Compose starts PostgreSQL and waits for its readiness check before starting
+the application at `http://localhost:3000`. The existing PostgreSQL 16 image
+and `products_db_data` volume are retained. Starting containers does not run
+migrations or seed data automatically; a fresh database still needs the
+initial migration and seed described above.
+
+Check the services with `docker compose ps` and the application with
+`curl http://localhost:3000/health` and `curl http://localhost:3000/products`.
+After code changes, run `docker compose up -d --build` again to rebuild and
+replace the application container.
+
+Use `docker compose down` to remove containers and the Compose network while
+keeping database data. Do not add `-v` unless you intend to delete the
+database volume.
