@@ -1,0 +1,21 @@
+{
+  "version": "mohxki3f",
+  "releaseTag": "rules-2026.04.28.1777338695005",
+  "generated": "2026-04-28T01:11:35.067Z",
+  "lastUpdated": "2026-10-02T14:42:10.126Z",
+  "lastUpdateReleaseTag": "rules-2026.04.28.1777338695005",
+  "installedDomains": [
+    "security-lang"
+  ],
+  "files": {
+    "security-lang/security-lang-node.mdc": {
+      "sha256": "9019cc2470bbfc6d01c5c34aff42498a91b59ca9766a34a79de1ebe93cc6c587",
+      "domain": "security-lang"
+    }
+  },
+  "stats": {
+    "totalFiles": 1,
+    "missingFiles": 0,
+    "domains": 1
+  }
+}
