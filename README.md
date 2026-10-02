@@ -12,6 +12,50 @@ The production command, `npm start`, uses environment variables provided by the 
 Run `npm run build` to compile the TypeScript source from `src` into `dist`, then run `npm start`.
 The project uses ECMAScript modules.
 
+## Lint
+
+Run `npm run lint` to check TypeScript files in `src` and `tests` with Biome's
+recommended lint rules. Errors and warnings cause a nonzero exit code.
+The command does not modify files, and formatting is disabled.
+Biome is a development dependency and is not installed in the runtime image.
+
+## Tests
+
+Database tests require a separate database named `products_test`, with the
+initial migration applied. For a fresh local setup, start PostgreSQL and
+prepare it once:
+
+```bash
+docker compose up -d db
+docker compose exec db sh -c 'createdb -U "$POSTGRES_USER" products_test'
+docker compose exec -T db sh -c 'psql -U "$POSTGRES_USER" -d products_test -v ON_ERROR_STOP=1' < migrations/001_create_products.sql
+```
+
+Set `TEST_DATABASE_URL` in `.env` to the host PostgreSQL connection URL with
+the database name changed to `products_test`. Run `npm run test:local` to
+load `.env` and execute all tests.
+
+`npm test` executes the same tests without loading an environment file.
+It expects `TEST_DATABASE_URL` to be supplied by the environment, as in CI.
+Database tests reject other database names and clean up their test data.
+
+## Continuous integration
+
+The `CI` workflow in `.github/workflows/ci.yml` runs on pull requests targeting
+`main` and pushes to `main`. Its `Lint, build and tests` job installs locked
+dependencies, applies the initial migration to a fresh PostgreSQL 16 test
+database, and runs `npm run lint`, `npm run build`, and `npm test` on Node.js 22.
+
+The test database exists only for that job. Its credentials are disposable
+test values, not production secrets; the workflow does not load `.env` or
+connect to local or production databases. Official checkout and Node setup
+actions are pinned to commit SHAs, with read-only repository permissions.
+
+Workflow results appear in the pull request checks and the repository's
+Actions tab. Requiring a successful check before merge needs a separate
+branch protection or ruleset setting. Docker build, image scanning, and
+deployment are not part of this initial workflow.
+
 ## API
 
 The server requires `DATABASE_URL`. The default port is `3000`; override it
