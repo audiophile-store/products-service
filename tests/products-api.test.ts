@@ -29,7 +29,7 @@ function createProduct(id: string, price: number): SeedProduct {
 async function withTestApp(
   run: (
     client: Client,
-    get: (path: string) => Promise<Response>,
+    get: (path: string, headers?: HeadersInit) => Promise<Response>,
   ) => Promise<void>,
 ) {
   const connectionString = process.env.TEST_DATABASE_URL;
@@ -62,9 +62,9 @@ async function withTestApp(
       const address = server.address();
       assert.ok(address && typeof address !== "string");
 
-      const get = (path: string) => fetch(
+      const get = (path: string, headers?: HeadersInit) => fetch(
         `http://127.0.0.1:${address.port}${path}`,
-        { signal: AbortSignal.timeout(5000) },
+        { headers, signal: AbortSignal.timeout(5000) },
       );
 
       await run(client, get);
@@ -148,6 +148,52 @@ for (const path of ["/products", "/products/api-existing"]) {
     });
   });
 }
+
+test("product reads allow only the configured browser origin", async () => {
+  const previousOrigin = process.env.CORS_ORIGIN;
+  const allowedOrigin = "http://localhost:5173";
+
+  try {
+    process.env.CORS_ORIGIN = allowedOrigin;
+    await withTestApp(async (client, get) => {
+      await seedProducts(client, [createProduct("cors-product", 99.99)]);
+
+      const list = await get("/products", { origin: allowedOrigin });
+      const single = await get("/products/cors-product", { origin: allowedOrigin });
+
+      assert.equal(list.status, 200);
+      assert.equal(list.headers.get("access-control-allow-origin"), allowedOrigin);
+      assert.equal(single.status, 200);
+      assert.equal(
+        single.headers.get("access-control-allow-origin"),
+        allowedOrigin,
+      );
+    });
+
+    await withTestApp(async (_client, get) => {
+      const response = await get("/products", {
+        origin: "https://evil.example",
+      });
+
+      assert.equal(response.status, 200);
+      assert.equal(response.headers.get("access-control-allow-origin"), null);
+    });
+
+    delete process.env.CORS_ORIGIN;
+    await withTestApp(async (_client, get) => {
+      const response = await get("/products", { origin: allowedOrigin });
+
+      assert.equal(response.status, 200);
+      assert.equal(response.headers.get("access-control-allow-origin"), null);
+    });
+  } finally {
+    if (previousOrigin === undefined) {
+      delete process.env.CORS_ORIGIN;
+    } else {
+      process.env.CORS_ORIGIN = previousOrigin;
+    }
+  }
+});
 
 test("GET /health and GET /version preserve their existing responses", async () => {
   await withTestApp(async (client, get) => {

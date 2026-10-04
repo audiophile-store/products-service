@@ -69,7 +69,9 @@ and deployment is not part of this workflow.
 ## API
 
 The server requires `DATABASE_URL`. The default port is `3000`; override it
-with `PORT`.
+with `PORT`. Set `CORS_ORIGIN` to the one browser address allowed to read
+the API. Locally that is `http://localhost:5173`. On Render set it to the
+production frontend address. If it is missing, no browser address is allowed.
 
 | Route | Response |
 | --- | --- |

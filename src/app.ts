@@ -13,6 +13,16 @@ const productFields = `
 export function createApp(database: Client | Pool) {
   const app = express();
 
+  app.use((req, res, next) => {
+    const allowedOrigin = process.env.CORS_ORIGIN;
+
+    if (allowedOrigin && req.get("origin") === allowedOrigin) {
+      res.setHeader("Access-Control-Allow-Origin", allowedOrigin);
+    }
+
+    next();
+  });
+
   app.get("/health", (_req, res) => {
     res.json({ status: "ok" });
   });
