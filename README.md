@@ -125,7 +125,9 @@ with only production dependencies. The application runs as the non-root
 `node` user. Local dependencies, build output, and environment files are
 excluded from the Docker build context.
 
-The runtime stage removes the bundled npm package and its `npm`/`npx` commands
+The runtime stage upgrades installed Debian packages before switching to the
+`node` user, so fixable operating-system vulnerabilities are patched at image
+build time. It then removes the bundled npm package and its `npm`/`npx` commands
 after installing production dependencies, reducing unnecessary tooling and
 its vulnerable dependencies. The build stage retains npm. Containers start
 with `node dist/index.js`, not `npm start`; npm commands remain available
