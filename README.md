@@ -5,7 +5,7 @@ product details from PostgreSQL to the webshop and supplies prices and stock
 information to the orders service.
 
 **[Live webshop](https://audiophile-store-beryl.vercel.app/)** ·
-**[Frontend code and screenshots](https://github.com/audiophile-store/webshop)**
+**[Frontend code](https://github.com/audiophile-store/webshop)**
 
 **Admin demo access:** Contact [Stefan Rakonjac](https://github.com/xarambash)
 for private credentials. Product create, edit and delete in the UI are currently demo-only.
